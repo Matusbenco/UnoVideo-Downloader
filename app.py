@@ -1,5 +1,5 @@
 import os
-import uuid  # Import pre generovanie unikátnych názvov
+import uuid
 from flask import Flask, render_template, request, send_file, after_this_request
 import yt_dlp
 
@@ -24,13 +24,11 @@ def index():
         else:
             final_download_name = 'stiahnute_video.mp4'
 
-        # VYTVORENIE UNIKÁTNEHO NÁZVU PRE DOČASNÝ SÚBOR
         temp_filename = f'video_temp_{uuid.uuid4()}.mp4'
         file_path = os.path.join(app.config['DOWNLOAD_FOLDER'], temp_filename)
 
         @after_this_request
         def cleanup(response):
-            # Pridanie hlavičiek, ktoré zabránia ukladaniu do cache prehliadača
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
@@ -42,8 +40,14 @@ def index():
 
         ydl_opts = {
             'format': 'bestvideo+bestaudio/best',
-            'outtmpl': file_path,  # Použije sa unikátny názov
+            'outtmpl': file_path,
             'merge_output_format': 'mp4',
+            # TÁTO NOVÁ ČASŤ MASKUJE NAŠU APLIKÁCIU AKO PREHLIADAČ
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
         }
 
         try:
@@ -56,6 +60,7 @@ def index():
                 download_name=final_download_name
             )
         except Exception as e:
+            # Vrátime konkrétnu chybu od yt-dlp pre lepšiu diagnostiku
             return f"Nastala chyba: {e}"
 
     return render_template('index.html')
