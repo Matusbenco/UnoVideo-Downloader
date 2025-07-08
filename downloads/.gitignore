@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Stiahnuté súbory a cookies
+downloads/
+*.mp4
+*.mkv
+*.webm
+cookies.txt
